@@ -66,6 +66,18 @@ test('Huawei flow state, poll secret and single-use callback',async t=>{
  assert.equal((await request('/v1/auth/huawei/poll',{id:flow.id,pollSecret:flow.pollSecret})).status,400);
 });
 
+test('native Huawei authorization exchanges its code only on the server',async t=>{
+ const calls=[];
+ const {request}=await setup(t,{env:{HUAWEI_CLIENT_ID:'id',HUAWEI_CLIENT_SECRET:'secret',HUAWEI_REDIRECT_URI:'http://127.0.0.1:4318/v1/auth/huawei/callback'},upstreamFetch:async (url,options)=>{calls.push({url,body:String(options.body)});return {ok:true,json:async()=>url.includes('/token')?{access_token:'verified-token'}:{openID:'native-openid'}};}});
+ const state=randomUUID();
+ assert.equal((await request('/v1/auth/huawei/native',{authorizationCode:'short',state})).status,400);
+ const result=await request('/v1/auth/huawei/native',{authorizationCode:'one-time-code',state});
+ assert.equal(result.status,200);assert.ok(result.token);assert.equal(result.user.email,'华为账号');
+ assert.equal(calls.length,2);assert.match(calls[0].url,/oauth2\/v3\/token/);assert.match(calls[0].body,/client_secret=secret/);
+ assert.match(calls[0].body,/redirect_uri=http%3A%2F%2F127.0.0.1%3A4318/);
+ assert.match(calls[1].url,/GOpen\.User\.getInfo/);
+});
+
 test('image deletion and a new image in the same batch converge',async t=>{
  const {client,register}=await setup(t);const auth=await register('image-delete@example.com'),a=client(),b=client();a.useSession(auth);b.useSession(auth);
  const old=a.capture('image',png);await a.sync();await b.sync();a.edit(old.id,{deleted:true});const replacement=a.capture('image',png);await a.sync();

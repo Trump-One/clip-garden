@@ -2,6 +2,7 @@ import { common } from '@kit.AbilityKit';
 import { pasteboard } from '@kit.BasicServicesKit';
 import { image } from '@kit.ImageKit';
 import { util } from '@kit.ArkTS';
+import { authentication } from '@kit.AccountKit';
 import { GardenStore, Clip, OAuthFlow } from '../services/GardenStore';
 @Entry
 @Component
@@ -91,8 +92,22 @@ struct Index {
   }
   private async huawei(): Promise<void> {
     if (this.flow || this.busy) return;
-    try { this.flowMerge = this.mergeGuest; this.flowExpires = Date.now() + 300000; this.flow = await this.store.startHuawei(); this.message = '请在系统浏览器授权，然后返回花园'; }
+    this.busy = true;
+    try {
+      const state = util.generateRandomUUID();
+      const request = new authentication.HuaweiIDProvider().createAuthorizationWithHuaweiIDRequest();
+      request.scopes = ['profile'];
+      request.permissions = ['serviceauthcode'];
+      request.forceAuthorization = true;
+      request.state = state;
+      const response = await new authentication.AuthenticationController(this.getUIContext().getHostContext()).executeRequest(request) as authentication.AuthorizationWithHuaweiIDResponse;
+      if (response.state !== state) throw new Error('华为授权状态校验失败');
+      const code = response.data?.authorizationCode;
+      if (!code) throw new Error('没有取得华为授权码，请重试');
+      await this.store.loginHuaweiCode(code, state, this.mergeGuest); this.page = 'garden'; this.refresh();
+    }
     catch (e) { this.message = (e as Error).message; }
+    finally { this.busy = false; }
   }
   @Builder header() {
     Row({ space: 8 }) {

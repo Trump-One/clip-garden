@@ -157,6 +157,14 @@ export function createApp({ database = ':memory:', env = process.env, upstreamFe
         for (const [k,v] of Object.entries({ client_id: env.HUAWEI_CLIENT_ID, redirect_uri: env.HUAWEI_REDIRECT_URI, response_type: 'code', scope: 'openid profile', state })) url.searchParams.set(k,v);
         return send(200, { id, pollSecret, url: url.href });
       }
+      if (req.method === 'POST' && path === '/v1/auth/huawei/native') {
+        limit(ip + ':auth', 15); oauthConfig();
+        const b = await json(req);
+        if (typeof b.authorizationCode !== 'string' || b.authorizationCode.length < 8 || b.authorizationCode.length > 4096 || typeof b.state !== 'string' || !UUID.test(b.state)) fail(400, '华为授权信息不正确');
+        // Account Kit returns the code inside the signed-in HarmonyOS app. Exchange it here so the
+        // app secret and the resulting Huawei identity never need to be trusted from the client.
+        return send(200, await exchangeHuawei(b.authorizationCode));
+      }
       if (req.method === 'GET' && path === '/v1/auth/huawei/callback') {
         oauthConfig(); const q = new URL(req.url, 'http://localhost').searchParams;
         const row = db.prepare('SELECT * FROM oauth WHERE state=? AND expires>? AND claimed=0').get(q.get('state'), Date.now());

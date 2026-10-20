@@ -48,7 +48,7 @@ if (!pkg.devDependencies?.['@ohos/hypium']) writeFileSync(join(work,'ohpm.log'),
 writeFileSync(join(work,'build.log'),run(hvigor,['--mode','module','-p','product=default','-p','module=entry@ohosTest','assembleHap','--no-daemon']));
 run(hdc,['rport','tcp:4318','tcp:4318']);
 run(hdc,['install','-r',join(project,'entry/build/default/outputs/ohosTest/entry-ohosTest-signed.hap')]);
-const output = run(hdc,['shell','aa','test','-b','app.clipgarden.harmony','-m','entry_test','-s','unittest','OpenHarmonyTestRunner','-w','90']);
+const output = run(hdc,['shell','aa','test','-b','com.trumpone.clipgarden','-m','entry_test','-s','unittest','OpenHarmonyTestRunner','-w','90']);
 writeFileSync(join(work,'native-result.log'),output);
 if (!output.includes('DEVICE_TEST_PASS') || !output.includes('TestFinished-ResultCode: 0') || output.includes('DEVICE_TEST_FAIL')) throw Error('Native tests failed; inspect ' + join(work,'native-result.log'));
 await peer.sync(); if (peer.snapshot().pending) throw Error(peer.message);

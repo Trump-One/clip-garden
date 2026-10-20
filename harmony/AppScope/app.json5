@@ -1,6 +1,6 @@
 {
   "app": {
-    "bundleName": "app.clipgarden.harmony",
+    "bundleName": "com.trumpone.clipgarden",
     "vendor": "Clip Garden",
     "versionCode": 10001,
     "versionName": "0.1.1",

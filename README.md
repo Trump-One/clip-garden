@@ -9,13 +9,12 @@
 | 功能 | 状态 |
 | --- | --- |
 | Windows / macOS 安装应用 | Electron 桌面工程，已生成 macOS ARM64 DMG/ZIP 和 Windows x64 NSIS EXE；macOS 已启动验证，Windows 待真机验证 |
-| HarmonyOS 7 | ArkTS / ArkUI 原生工程，API 26.0.0，已编译并签名安装到 Mate 80 Pro Max / 鸿蒙 7；主页可打开，真机原生同步 / 存储 / 离线检查已通过，见测试记录 |
+| HarmonyOS 7 | ArkTS / ArkUI 原生工程，API 26.0.0；账号授权代码已编译。新的华为应用包名需重新生成匹配的 DevEco 签名 Profile，当前真机上的旧调试版尚未替换 |
 | 登录注册 | 邮箱 + 密码、scrypt 密码哈希、可撤销会话；无需邮件服务即可本机测试 |
 | 游客使用 | 不需要服务，本机保存；与账号数据隔离 |
 | 游客转账号 | 登录时显式勾选合并，才移动并上传游客记录 |
 | 多设备同步 | 同一服务、同一账号；文字、PNG 图片、置顶、删除；断网重试、幂等操作、版本冲突保留副本 |
-| 华为账号登录 | 三端共用官方 OAuth 浏览器授权流程，代码和模拟测试已完成；真实登录尚待配置华为应用及回调地址 |
-| 鸿蒙系统账号原生一键登录 | 尚未接入 Account Kit 原生授权面板；目前按钮打开系统浏览器，首次需要授权，不能称为原生免跳转一键登录 |
+| 华为账号登录 | 鸿蒙使用 Account Kit 原生授权码流程（仅 `profile`，不申请手机号），Windows/macOS 使用华为 OAuth；真实登录仍待服务端凭据和真机授权验证 |
 
 这是可运行的开发首版，不是完成签名、审核和实机验收的正式商用版本。
 
@@ -71,15 +70,15 @@ hvigorw --mode module -p product=default -p module=entry@default assembleHap
 
 使用 DevEco 自带 Node/JBR，或设置 `NODE_HOME`、`JAVA_HOME`、`DEVECO_SDK_HOME` 后调用 DevEco 的 `tools/hvigor/bin/hvigorw`。本机 `local.properties` 从 Git 忽略，勿提交 SDK 绝对路径。
 
-当前产物为 `harmony/entry/build/default/outputs/default/entry-default-unsigned.hap`。在 DevEco 的 Signing Configs 中为 `app.clipgarden.harmony` 配置自己的自动签名或证书后，再安装到已授权设备。不能把其他应用的签名配置直接复用到此包名。已在连接的 Mate 80 Pro Max / 鸿蒙 7 安装本机调试签名版本；用户已确认主页正常打开；随后 7 项真机原生检查和 5 项桌面结果核对通过。完整的按钮交互与真实华为授权仍需继续验收。本机建立 USB 反向端口后，手机可用 `http://127.0.0.1:4318` 连接电脑服务，拔掉 USB 后需改用同局域网 IP。
+当前包名为 `com.trumpone.clipgarden`，与华为开发者后台的独立应用一致。调试签名和本机 SDK 路径不要提交到仓库。手机通过 USB 反向端口可用 `http://127.0.0.1:4318` 连接电脑服务，拔掉 USB 后需改用同局域网 IP。
 
 鸿蒙端通过系统 `PasteButton` 在用户点击时读取剪贴板，收录文字和 PNG 图片；不会持续在后台读取其他应用的剪贴板。账号令牌保存到系统 Asset Store；记录保存在应用私有 Preferences 沙箱，未单独加密。桌面端数据文件使用 Electron safeStorage 和系统密钥加密。
 
 ## 华为账号
 
-见 [华为登录配置](docs/huawei-login.md)。首版使用相同的 Web OAuth 客户端贯通三个系统的身份，避免把不同原生应用的 OpenID 误当作同一身份。
+见 [华为登录配置](docs/huawei-login.md)。三个端共享同一华为应用 Client ID；鸿蒙使用 Account Kit 授权码，桌面端使用 Web OAuth。华为授权码与客户端身份均由服务端验证，不申请手机号权限。
 
-未配置凭据时服务会明确返回 503，不返回虚假登录成功。真实华为授权和鸿蒙原生 Account Kit 一键登录均不能以模拟测试替代验收。
+未配置服务端凭据时会明确返回 503，不返回虚假登录成功。当前 DevEco 签名 Profile 仍绑定旧包名，需生成与 `com.trumpone.clipgarden` 匹配的 Profile 后才能安装验证新登录代码。
 
 ## 同步协议与数据
 

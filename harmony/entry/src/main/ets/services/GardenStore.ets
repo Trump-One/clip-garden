@@ -29,6 +29,7 @@ class PollResult extends Session { pending: boolean = false; }
 class SyncRequest { cursor: number = 0; operations: Operation[] = []; }
 class LoginRequest { email: string = ''; password: string = ''; }
 class PollRequest { id: string = ''; pollSecret: string = ''; }
+class HuaweiCodeRequest { authorizationCode: string = ''; state: string = ''; }
 
 export class GardenStore {
   prefs?: preferences.Preferences;
@@ -156,6 +157,11 @@ export class GardenStore {
     const body = new PollRequest(); body.id = flow.id; body.pollSecret = flow.pollSecret;
     const result = JSON.parse(await this.request('/v1/auth/huawei/poll', JSON.stringify(body))) as PollResult;
     if (result.pending) return false; await this.useSession(result, merge); return true;
+  }
+  async loginHuaweiCode(authorizationCode: string, state: string, merge: boolean): Promise<void> {
+    const body = new HuaweiCodeRequest(); body.authorizationCode = authorizationCode; body.state = state;
+    const auth = JSON.parse(await this.request('/v1/auth/huawei/native', JSON.stringify(body))) as Session;
+    await this.useSession(auth, merge);
   }
   async logout(): Promise<void> {
     if (this.syncing) throw new Error('同步中，请稍后退出');
