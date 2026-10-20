@@ -96,7 +96,7 @@ struct Index {
     try {
       const state = util.generateRandomUUID();
       const request = new authentication.HuaweiIDProvider().createAuthorizationWithHuaweiIDRequest();
-      request.scopes = ['profile'];
+      request.scopes = ['openid'];
       request.permissions = ['serviceauthcode'];
       request.forceAuthorization = true;
       request.state = state;

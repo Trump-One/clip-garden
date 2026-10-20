@@ -2,7 +2,7 @@
   "app": {
     "bundleName": "com.trumpone.clipgarden",
     "vendor": "Clip Garden",
-    "versionCode": 10001,
+    "versionCode": 10002,
     "versionName": "0.1.1",
     "icon": "$media:app_icon",
     "label": "$string:app_name"
