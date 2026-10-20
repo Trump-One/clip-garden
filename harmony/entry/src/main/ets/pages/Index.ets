@@ -2,7 +2,6 @@ import { common } from '@kit.AbilityKit';
 import { pasteboard } from '@kit.BasicServicesKit';
 import { image } from '@kit.ImageKit';
 import { util } from '@kit.ArkTS';
-import { authentication } from '@kit.AccountKit';
 import { GardenStore, Clip, OAuthFlow } from '../services/GardenStore';
 @Entry
 @Component
@@ -94,17 +93,10 @@ struct Index {
     if (this.flow || this.busy) return;
     this.busy = true;
     try {
-      const state = util.generateRandomUUID();
-      const request = new authentication.HuaweiIDProvider().createAuthorizationWithHuaweiIDRequest();
-      request.scopes = ['openid'];
-      request.permissions = ['serviceauthcode'];
-      request.forceAuthorization = true;
-      request.state = state;
-      const response = await new authentication.AuthenticationController(this.getUIContext().getHostContext()).executeRequest(request) as authentication.AuthorizationWithHuaweiIDResponse;
-      if (response.state !== state) throw new Error('华为授权状态校验失败');
-      const code = response.data?.authorizationCode;
-      if (!code) throw new Error('没有取得华为授权码，请重试');
-      await this.store.loginHuaweiCode(code, state, this.mergeGuest); this.page = 'garden'; this.refresh();
+      this.flowMerge = this.mergeGuest;
+      this.flowExpires = Date.now() + 5 * 60 * 1000;
+      this.flow = await this.store.startHuawei();
+      this.message = '请在系统浏览器完成华为授权，返回应用后会自动登录';
     }
     catch (e) { this.message = (e as Error).message; }
     finally { this.busy = false; }
@@ -167,7 +159,7 @@ struct Index {
       Button(this.registering ? '已有账号，去登录' : '没有账号，注册一个').fontColor('#657460').backgroundColor('#F1F0E5').onClick(() => this.registering = !this.registering)
       Button('华为账号登录').width('100%').fontColor('#34433D').backgroundColor('#F5C69E').enabled(!this.flow && !this.busy).onClick(() => this.huawei())
       if (this.flow) { Button('取消华为登录').fontColor('#657460').backgroundColor('#F1F0E5').onClick(() => { this.flow = undefined; this.message = '已取消'; }) }
-      Text('通过系统浏览器授权，需先配置华为应用。').fontSize(11).fontColor('#929B86')
+      Text('通过系统浏览器完成华为账号授权，返回后自动登录。').fontSize(11).fontColor('#929B86')
       Button('先以游客身份逛逛').fontColor('#657460').backgroundColor('#F1F0E5').onClick(() => this.page = 'garden')
     }.width('100%').padding({ top: 30 })
   }

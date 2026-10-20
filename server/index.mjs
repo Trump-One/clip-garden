@@ -154,7 +154,7 @@ export function createApp({ database = ':memory:', env = process.env, upstreamFe
         const id = randomUUID(), state = secret(), pollSecret = secret();
         db.prepare('INSERT INTO oauth(id,state,pollhash,expires) VALUES(?,?,?,?)').run(id, state, digest(pollSecret), Date.now() + 5 * 60000);
         const url = new URL('https://oauth-login.cloud.huawei.com/oauth2/v3/authorize');
-        for (const [k,v] of Object.entries({ client_id: env.HUAWEI_CLIENT_ID, redirect_uri: env.HUAWEI_REDIRECT_URI, response_type: 'code', scope: 'openid profile', state })) url.searchParams.set(k,v);
+        for (const [k,v] of Object.entries({ client_id: env.HUAWEI_CLIENT_ID, redirect_uri: env.HUAWEI_REDIRECT_URI, response_type: 'code', scope: 'openid', state })) url.searchParams.set(k,v);
         return send(200, { id, pollSecret, url: url.href });
       }
       if (req.method === 'POST' && path === '/v1/auth/huawei/native') {
