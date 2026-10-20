@@ -1,0 +1,16 @@
+node_modules/
+release/
+.env
+*.sqlite*
+.DS_Store
+coverage/
+harmony/.hvigor/
+harmony/.idea/
+harmony/oh_modules/
+harmony/**/build/
+harmony/local.properties
+harmony/**/oh_modules/
+harmony/signing/
+*.p12
+*.p7b
+*.cer

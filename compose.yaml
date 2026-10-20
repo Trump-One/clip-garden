@@ -1,0 +1,17 @@
+services:
+  api:
+    build: .
+    restart: unless-stopped
+    ports:
+      - '127.0.0.1:4318:4318'
+    environment:
+      HOST: 0.0.0.0
+      PORT: 4318
+      DATABASE_PATH: /data/clipgarden.sqlite
+      HUAWEI_CLIENT_ID: ${HUAWEI_CLIENT_ID:-}
+      HUAWEI_CLIENT_SECRET: ${HUAWEI_CLIENT_SECRET:-}
+      HUAWEI_REDIRECT_URI: ${HUAWEI_REDIRECT_URI:-}
+    volumes:
+      - garden-data:/data
+volumes:
+  garden-data:

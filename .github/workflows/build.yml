@@ -1,0 +1,45 @@
+name: Test and build desktop apps
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: node --test tests/*.test.mjs
+  desktop:
+    needs: test
+    strategy:
+      matrix:
+        os: [macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.28.2
+      - run: pnpm install --frozen-lockfile --ignore-scripts
+      - run: node node_modules/electron/install.js
+      - if: runner.os == 'macOS'
+        run: pnpm exec electron-builder --mac dmg zip --arm64 --x64 --publish never
+      - if: runner.os == 'Windows'
+        run: pnpm exec electron-builder --win nsis --x64 --publish never
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ClipGarden-${{ runner.os }}
+          path: |
+            release/*.dmg
+            release/*.zip
+            release/*.exe
+          retention-days: 14

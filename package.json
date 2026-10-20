@@ -1,0 +1,55 @@
+{
+  "name": "clip-garden",
+  "version": "0.1.0",
+  "private": true,
+  "description": "剪贴花园 · Windows / macOS / HarmonyOS",
+  "main": "desktop/main.cjs",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "scripts": {
+    "start": "electron .",
+    "server": "node --env-file-if-exists=.env server/index.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "dist:mac": "electron-builder --mac dmg zip",
+    "dist:win": "electron-builder --win nsis",
+    "preview": "node scripts/preview.mjs",
+    "server:local": "node --env-file-if-exists=.env scripts/local-server.mjs"
+  },
+  "devDependencies": {
+    "electron": "44.9.1",
+    "electron-builder": "26.15.3"
+  },
+  "build": {
+    "appId": "app.clipgarden.desktop",
+    "productName": "剪贴花园 Next",
+    "artifactName": "ClipGarden-${version}-${os}-${arch}.${ext}",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "desktop/**",
+      "ui/**",
+      "package.json"
+    ],
+    "mac": {
+      "category": "public.app-category.productivity",
+      "target": [
+        "dmg",
+        "zip"
+      ]
+    },
+    "win": {
+      "target": [
+        "nsis"
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    },
+    "icon": "desktop/icon.png"
+  },
+  "author": "Trump-One",
+  "packageManager": "pnpm@10.28.2"
+}
