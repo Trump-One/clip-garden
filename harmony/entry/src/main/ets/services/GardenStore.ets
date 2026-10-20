@@ -40,10 +40,12 @@ export class GardenStore {
   syncEnabled: boolean = true;
   message: string = '';
   private context?: common.UIAbilityContext;
+  private secretAlias: string = 'clipgarden-session';
   private key(): string { return this.user.id || 'guest'; }
-  async init(context: common.UIAbilityContext): Promise<void> {
+  async init(context: common.UIAbilityContext, storageName: string = 'garden-v1'): Promise<void> {
     this.context = context;
-    this.prefs = await preferences.getPreferences(context, { name: 'garden-v1' });
+    this.secretAlias = storageName === 'garden-v1' ? 'clipgarden-session' : storageName + '-session';
+    this.prefs = await preferences.getPreferences(context, { name: storageName });
     this.server = await this.prefs.get('server', this.server) as string;
     this.syncEnabled = await this.prefs.get('syncEnabled', true) as boolean;
     this.user = JSON.parse(await this.prefs.get('user', '{"id":"","email":""}') as string) as User;
@@ -57,7 +59,7 @@ export class GardenStore {
   private readSecret(): string {
     try {
       let query: asset.AssetMap = new Map();
-      query.set(asset.Tag.ALIAS, new util.TextEncoder().encodeInto('clipgarden-session'));
+      query.set(asset.Tag.ALIAS, new util.TextEncoder().encodeInto(this.secretAlias));
       query.set(asset.Tag.RETURN_TYPE, asset.ReturnType.ALL);
       const rows = asset.querySync(query);
       if (!rows.length) return '';
@@ -67,7 +69,7 @@ export class GardenStore {
   }
   private setSecret(value: string): void {
     let query: asset.AssetMap = new Map();
-    query.set(asset.Tag.ALIAS, new util.TextEncoder().encodeInto('clipgarden-session'));
+    query.set(asset.Tag.ALIAS, new util.TextEncoder().encodeInto(this.secretAlias));
     try { asset.removeSync(query); } catch { /* first login */ }
     if (value.length > 0) {
       query.set(asset.Tag.SECRET, new util.TextEncoder().encodeInto(value));

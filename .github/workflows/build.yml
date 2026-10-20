@@ -31,6 +31,8 @@ jobs:
           version: 10.28.2
       - run: pnpm install --frozen-lockfile --ignore-scripts
       - run: node node_modules/electron/install.js
+      - name: Test real system clipboard
+        run: pnpm exec electron tests/electron-clipboard-smoke.cjs
       - if: runner.os == 'macOS'
         run: pnpm exec electron-builder --mac dmg zip --arm64 --x64 --publish never
       - if: runner.os == 'Windows'

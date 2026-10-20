@@ -1,0 +1,19 @@
+{
+  "ok": true,
+  "nativeChecks": [
+    "guest-local-persistence",
+    "login-and-mac-to-phone-text-image-sync",
+    "phone-to-mac-add-and-pin",
+    "asset-store-session-and-account-persistence",
+    "offline-outbox-and-reconnection",
+    "phone-delete-sync",
+    "logout-and-guest-account-isolation"
+  ],
+  "desktopChecks": {
+    "phoneText": true,
+    "phonePin": true,
+    "offlineRecovery": true,
+    "deleteSync": true,
+    "guestIsolation": true
+  }
+}

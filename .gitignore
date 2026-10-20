@@ -14,3 +14,6 @@ harmony/signing/
 *.p12
 *.p7b
 *.cer
+work/
+harmony/**/.test/
+harmony/entry/src/ohosTest/ets/testrunner/DeviceConfig.ets

@@ -1,0 +1,9 @@
+{
+  "ok": true,
+  "textRoundtrip": true,
+  "pngRoundtrip": true,
+  "width": 1024,
+  "height": 1024,
+  "electron": "44.9.1",
+  "clipboardRestored": true
+}

@@ -100,7 +100,7 @@ export function createApp({ database = ':memory:', env = process.env, upstreamFe
         const p = op.payload;
         if (!p || !['text','image'].includes(p.kind) || typeof p.content !== 'string' || typeof p.deleted !== 'boolean' || typeof p.pinned !== 'boolean' || !Number.isSafeInteger(p.copyCount) || p.copyCount < 1 || p.copyCount > 2147483647) fail(400, '记录内容不正确');
         if (p.kind === 'text' && Buffer.byteLength(p.content) > 2 * 1024 * 1024) fail(413, '文字最多 2 MB');
-        if (p.kind === 'image' && (!/^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(p.content) || p.content.length > 28 * 1024 * 1024)) fail(413, '图片须为 PNG 且不超过 20 MB');
+        if (p.kind === 'image' && !p.deleted && (!/^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(p.content) || p.content.length > 28 * 1024 * 1024)) fail(413, '图片须为 PNG 且不超过 20 MB');
         if (p.content.length === 0 && !p.deleted) fail(400, '内容不能为空');
         // Bounds are server-enforced, client timestamps are presentation only.
         const stamp = value => Number.isSafeInteger(value) && value > 0 && value < Date.now() + 86400000 ? value : Date.now();
@@ -129,7 +129,7 @@ export function createApp({ database = ':memory:', env = process.env, upstreamFe
       const ip = req.socket.remoteAddress; // Never trust arbitrary X-Forwarded-For.
       limit(ip + ':all', 240);
       if (req.headers.origin) fail(403, '此 API 仅供原生客户端使用');
-      if (req.method === 'GET' && path === '/health') return send(200, { ok: true, version: '0.1.0' });
+      if (req.method === 'GET' && path === '/health') return send(200, { ok: true, version: '0.1.1' });
       if (req.method === 'POST' && ['/v1/auth/register','/v1/auth/login'].includes(path)) {
         limit(ip + ':auth', 15);
         const b = await json(req);

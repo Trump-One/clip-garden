@@ -2,6 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { createRequire } from 'node:module';
+import { readFileSync } from 'node:fs';
+const png = 'data:image/png;base64,' + readFileSync(new URL('../desktop/icon.png', import.meta.url)).toString('base64');
 import { createApp } from '../server/index.mjs';
 const { Garden, initialState } = createRequire(import.meta.url)('../desktop/core.cjs');
 async function setup(t, options={}) {
@@ -21,7 +23,7 @@ test('authentication, password hashing behavior, revocation, origin isolation',a
 });
 test('two devices converge; text, image, pin and tombstone cross devices',async t=>{
  const {client,register}=await setup(t);const auth=await register('two@example.com'),a=client(),b=client();a.useSession(auth);b.useSession(auth);
- const clip=a.capture('text','共同的小记忆');a.capture('image','data:image/png;base64,aGVsbG8=');await a.sync();await b.sync();assert.equal(b.snapshot().items.length,2);
+ const clip=a.capture('text','共同的小记忆');a.capture('image',png);await a.sync();await b.sync();assert.equal(b.snapshot().items.length,2);
  b.edit(clip.id,{pinned:true});await b.sync();await a.sync();assert.equal(a.space.items.find(i=>i.id===clip.id).pinned,true);
  a.edit(clip.id,{deleted:true});await a.sync();await b.sync();assert.equal(b.snapshot().items.length,1);assert.equal(b.space.items.find(i=>i.id===clip.id).content,'');
 });
@@ -62,4 +64,10 @@ test('Huawei flow state, poll secret and single-use callback',async t=>{
  assert.equal((await request('/v1/auth/huawei/callback?state='+state+'&code=replay')).status,400);
  const result=await request('/v1/auth/huawei/poll',{id:flow.id,pollSecret:flow.pollSecret});assert.ok(result.token);assert.equal(result.user.email,'华为账号');
  assert.equal((await request('/v1/auth/huawei/poll',{id:flow.id,pollSecret:flow.pollSecret})).status,400);
+});
+
+test('image deletion and a new image in the same batch converge',async t=>{
+ const {client,register}=await setup(t);const auth=await register('image-delete@example.com'),a=client(),b=client();a.useSession(auth);b.useSession(auth);
+ const old=a.capture('image',png);await a.sync();await b.sync();a.edit(old.id,{deleted:true});const replacement=a.capture('image',png);await a.sync();
+ assert.equal(a.snapshot().pending,0,a.message);await b.sync();assert.equal(b.snapshot().items.length,1);assert.equal(b.snapshot().items[0].id,replacement.id);assert.equal(b.space.items.find(i=>i.id===old.id).deleted,true);
 });

@@ -9,7 +9,7 @@
 | 功能 | 状态 |
 | --- | --- |
 | Windows / macOS 安装应用 | Electron 桌面工程，已生成 macOS ARM64 DMG/ZIP 和 Windows x64 NSIS EXE；macOS 已启动验证，Windows 待真机验证 |
-| HarmonyOS 7 | ArkTS / ArkUI 原生工程，API 26.0.0，已编译并签名安装到 Mate 80 Pro Max / 鸿蒙 7；用户已确认主页正常打开，同步仍待真机验收 |
+| HarmonyOS 7 | ArkTS / ArkUI 原生工程，API 26.0.0，已编译并签名安装到 Mate 80 Pro Max / 鸿蒙 7；主页可打开，真机原生同步 / 存储 / 离线检查已通过，见测试记录 |
 | 登录注册 | 邮箱 + 密码、scrypt 密码哈希、可撤销会话；无需邮件服务即可本机测试 |
 | 游客使用 | 不需要服务，本机保存；与账号数据隔离 |
 | 游客转账号 | 登录时显式勾选合并，才移动并上传游客记录 |
@@ -71,7 +71,7 @@ hvigorw --mode module -p product=default -p module=entry@default assembleHap
 
 使用 DevEco 自带 Node/JBR，或设置 `NODE_HOME`、`JAVA_HOME`、`DEVECO_SDK_HOME` 后调用 DevEco 的 `tools/hvigor/bin/hvigorw`。本机 `local.properties` 从 Git 忽略，勿提交 SDK 绝对路径。
 
-当前产物为 `harmony/entry/build/default/outputs/default/entry-default-unsigned.hap`。在 DevEco 的 Signing Configs 中为 `app.clipgarden.harmony` 配置自己的自动签名或证书后，再安装到已授权设备。不能把其他应用的签名配置直接复用到此包名。已在连接的 Mate 80 Pro Max / 鸿蒙 7 安装本机调试签名版本；用户已确认主页正常打开；交互和跨设备同步仍待验收。本机建立 USB 反向端口后，手机可用 `http://127.0.0.1:4318` 连接电脑服务，拔掉 USB 后需改用同局域网 IP。
+当前产物为 `harmony/entry/build/default/outputs/default/entry-default-unsigned.hap`。在 DevEco 的 Signing Configs 中为 `app.clipgarden.harmony` 配置自己的自动签名或证书后，再安装到已授权设备。不能把其他应用的签名配置直接复用到此包名。已在连接的 Mate 80 Pro Max / 鸿蒙 7 安装本机调试签名版本；用户已确认主页正常打开；随后 7 项真机原生检查和 5 项桌面结果核对通过。完整的按钮交互与真实华为授权仍需继续验收。本机建立 USB 反向端口后，手机可用 `http://127.0.0.1:4318` 连接电脑服务，拔掉 USB 后需改用同局域网 IP。
 
 鸿蒙端通过系统 `PasteButton` 在用户点击时读取剪贴板，收录文字和 PNG 图片；不会持续在后台读取其他应用的剪贴板。账号令牌保存到系统 Asset Store；记录保存在应用私有 Preferences 沙箱，未单独加密。桌面端数据文件使用 Electron safeStorage 和系统密钥加密。
 
@@ -87,7 +87,7 @@ hvigorw --mode module -p product=default -p module=entry@default assembleHap
 
 服务端 SQLite 不提供端到端加密；管理员可访问内容。每账号最多约 200 MB 当前记录正文；单条文字 2 MB，图片 20 MB / 3000 万像素（客户端限制）。当前适合个人 / 可信小规模测试；公开注册商业服务还需邮件验证、密码找回、账号注销、滥用防护、审计与备份策略。邮箱账号与华为账号不会按未验证邮箱自动合并。
 
-详见 [首版验证记录](docs/verification.md)。
+当前修复版为 **0.1.1**。详见 [实机测试与修复记录](docs/testing.md) 和 [首版验证记录](docs/verification.md)。
 
 ## 仓库内容
 
