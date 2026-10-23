@@ -33,6 +33,8 @@ node scripts/local-server.mjs
 3. 另一设备填写同一个服务地址、登录同一个账号。
 4. 新增记录后自动轮询同步，也可点击「同步一下」。
 
+个人构建可通过被 Git 忽略的 `desktop/server-config.local.json` 和 `harmony/entry/src/main/resources/rawfile/server-config.local.json` 预设 HTTPS 服务地址，格式为 `{"server":"https://你的服务域名"}`。本机生成的桌面和鸿蒙安装包会带入该地址，登录后自动开启同步；公开源码不包含个人地址。没有本地配置的构建使用通用占位地址，需要在设置里填写自己的服务。
+
 局域网 HTTP 没有传输加密，仅用于可信网络开发测试，请不要复用真实密码或复制敏感内容。正式部署使用 HTTPS。数据库默认写入 `data/clipgarden.sqlite`，已从 Git 忽略；支持 `DATABASE_PATH` 指定数据位置。不要把电脑的开发端口直接映射到公网。
 
 仅本机开发、无局域网暴露时：

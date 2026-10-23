@@ -79,6 +79,8 @@ else {
     let state = initialState();
     try { if (existsSync(statePath)) state = JSON.parse(safeStorage.decryptString(readFileSync(statePath))); }
     catch { dialog.showErrorBox('本机数据无法读取', '为保护原有数据，应用已停止启动。请恢复系统钥匙串或从备份恢复。'); app.quit(); return; }
+    const configuredServer = initialState().server;
+    if (configuredServer !== 'https://sync.example.com' && (state.server === 'http://127.0.0.1:4318' || state.server === 'https://sync.example.com')) state.server = configuredServer;
     garden = new Garden(state, value => {
       const tmp = statePath + '.tmp'; writeFileSync(tmp, safeStorage.encryptString(JSON.stringify(value)), { mode: 0o600 }); renameSync(tmp, statePath);
     });

@@ -30,6 +30,7 @@ class SyncRequest { cursor: number = 0; operations: Operation[] = []; }
 class LoginRequest { email: string = ''; password: string = ''; }
 class PollRequest { id: string = ''; pollSecret: string = ''; }
 class HuaweiCodeRequest { authorizationCode: string = ''; state: string = ''; }
+class ServerConfig { server: string = ''; }
 
 export class GardenStore {
   prefs?: preferences.Preferences;
@@ -43,15 +44,24 @@ export class GardenStore {
   private context?: common.UIAbilityContext;
   private secretAlias: string = 'clipgarden-session';
   private key(): string { return this.user.id || 'guest'; }
+  private async defaultServer(context: common.UIAbilityContext): Promise<string> {
+    try {
+      const raw = await context.resourceManager.getRawFileContent('server-config.local.json');
+      const config = JSON.parse(util.TextDecoder.create('utf-8').decodeWithStream(raw)) as ServerConfig;
+      if (typeof config.server === 'string' && /^https:\/\/[a-zA-Z0-9.-]+(:\d+)?$/.test(config.server)) return config.server;
+    } catch { /* a public source checkout uses the generic self-hosted default */ }
+    return 'https://sync.example.com';
+  }
   async init(context: common.UIAbilityContext, storageName: string = 'garden-v1'): Promise<void> {
     this.context = context;
     this.secretAlias = storageName === 'garden-v1' ? 'clipgarden-session' : storageName + '-session';
     this.prefs = await preferences.getPreferences(context, { name: storageName });
-    this.server = await this.prefs.get('server', this.server) as string;
     this.syncEnabled = await this.prefs.get('syncEnabled', true) as boolean;
     this.user = JSON.parse(await this.prefs.get('user', '{"id":"","email":""}') as string) as User;
     this.token = this.user.id ? this.readSecret() : '';
     if (!this.token) this.user = new User();
+    const savedServer = await this.prefs.get('server', '') as string;
+    this.server = !savedServer || (savedServer === 'https://sync.example.com' && !this.user.id) ? await this.defaultServer(context) : savedServer;
     await this.loadSpace();
   }
   private async loadSpace(): Promise<void> {

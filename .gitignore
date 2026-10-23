@@ -2,6 +2,8 @@ node_modules/
 .hvigor/
 release/
 .env
+desktop/server-config.local.json
+harmony/entry/src/main/resources/rawfile/server-config.local.json
 *.sqlite*
 .DS_Store
 coverage/

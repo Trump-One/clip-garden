@@ -2,8 +2,18 @@ const { randomUUID, createHash } = require('node:crypto');
 const hash = text => createHash('sha256').update(text).digest('hex');
 const privateHost = host => host === 'localhost' || host === '[::1]' || /^127\./.test(host) || /^10\./.test(host) || /^192\.168\./.test(host) || /^172\.(1[6-9]|2[0-9]|3[01])\./.test(host);
 const emptySpace = () => ({ items: [], pending: {}, cursor: 0 });
+const FALLBACK_SERVER = 'https://sync.example.com';
+function defaultServer() {
+  try {
+    const candidate = require('./server-config.local.json').server;
+    const url = new URL(candidate);
+    if (url.protocol === 'https:' && url.pathname === '/' && !url.search && !url.hash && !url.username && !url.password) return url.origin;
+  } catch { /* use the generic self-hosted default */ }
+  return FALLBACK_SERVER;
+}
+const DEFAULT_SERVER = defaultServer();
 function initialState() {
-  return { version: 1, active: 'guest', spaces: { guest: emptySpace() }, sessions: {}, server: 'http://127.0.0.1:4318', paused: true, syncEnabled: false };
+  return { version: 1, active: 'guest', spaces: { guest: emptySpace() }, sessions: {}, server: DEFAULT_SERVER, paused: true, syncEnabled: false };
 }
 class Garden {
   constructor(state = initialState(), persist = () => {}, request = fetch) { this.state = state; this.persist = persist; this.request = request; this.busy = false; this.message = ''; }

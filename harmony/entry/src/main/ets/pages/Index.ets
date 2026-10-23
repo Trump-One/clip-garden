@@ -166,7 +166,7 @@ struct Index {
   @Builder settingsPage() {
     Column({ space: 18 }) {
       Text('花园设置').fontSize(28).fontWeight(FontWeight.Bold).fontColor('#34433D')
-      Text('三端填写同一个服务地址，不带路径').fontSize(12).fontColor('#8B9682')
+      Text('三端使用同一个服务地址；首次登录后会自动同步').fontSize(12).fontColor('#8B9682')
       TextInput({ placeholder: 'https://sync.example.com', text: this.server }).onChange((v: string) => this.server = v)
       Row() { Text('开启账号同步').fontColor('#34433D'); Blank(); Toggle({ type: ToggleType.Switch, isOn: this.syncEnabled }).onChange((v: boolean) => this.syncEnabled = v) }.width('100%')
       Text('本机和私有局域网支持 HTTP 测试，传输未加密，请用测试账号。账号令牌由系统 Asset Store 保存，历史记录位于私有沙箱。服务端未实现端到端加密。').fontSize(12).fontColor('#8B9682').lineHeight(22)
