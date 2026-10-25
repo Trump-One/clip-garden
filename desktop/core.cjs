@@ -13,14 +13,14 @@ function defaultServer() {
 }
 const DEFAULT_SERVER = defaultServer();
 function initialState() {
-  return { version: 1, active: 'guest', spaces: { guest: emptySpace() }, sessions: {}, server: DEFAULT_SERVER, paused: true, syncEnabled: false };
+  return { version: 1, active: 'guest', spaces: { guest: emptySpace() }, sessions: {}, server: DEFAULT_SERVER, syncEnabled: false };
 }
 class Garden {
-  constructor(state = initialState(), persist = () => {}, request = fetch) { this.state = state; this.persist = persist; this.request = request; this.busy = false; this.message = ''; }
+  constructor(state = initialState(), persist = () => {}, request = fetch) { this.state = state; delete this.state.paused; this.persist = persist; this.request = request; this.busy = false; this.message = ''; }
   save() { this.persist(this.state); }
   get space() { return this.state.spaces[this.state.active]; }
   snapshot() {
-    return { items: this.space.items.filter(i => !i.deleted), paused: this.state.paused, server: this.state.server,
+    return { items: this.space.items.filter(i => !i.deleted), server: this.state.server,
       user: this.state.sessions[this.state.active]?.user || null, syncEnabled: this.state.syncEnabled,
       pending: Object.keys(this.space.pending).length, message: this.message, busy: this.busy };
   }
@@ -52,7 +52,6 @@ class Garden {
       if (next !== this.state.server && Object.keys(this.state.sessions).length) throw new Error('更换服务器前请退出账号；不同服务的数据保留在各自数据文件中');
       this.state.server = next;
     }
-    if ('paused' in settings) this.state.paused = Boolean(settings.paused);
     if ('syncEnabled' in settings) this.state.syncEnabled = Boolean(settings.syncEnabled);
     this.save();
   }

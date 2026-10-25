@@ -13,14 +13,12 @@ const contentHash = x => createHash('sha256').update(x).digest('hex');
 function notify() { if (win && !win.isDestroyed()) win.webContents.send('garden:changed'); }
 function show() { win.show(); win.focus(); }
 async function capture() {
-  if (garden.state.paused || captureBusy) return;
+  if (captureBusy) return;
   captureBusy = true;
   try {
     await withClipboard(async () => {
-      if (garden.state.paused) return;
       const clip = await clipAdapter.read();
       if (!clip) { last = ''; return; }
-      if (garden.state.paused) return;
       const key = contentHash(clip.content);
       if (key !== last) { last = key; garden.capture(clip.kind, clip.content); notify(); }
     });
@@ -46,11 +44,11 @@ async function pollHuawei() {
   } catch (e) { oauthFlow = null; garden.message = e.message; notify(); }
 }
 const actions = {
-  snapshot: () => ({ ...garden.snapshot(), huaweiPending: Boolean(oauthFlow) }),
+  snapshot: () => ({ ...garden.snapshot(), huaweiPending: Boolean(oauthFlow), openAtLogin: app.getLoginItemSettings().openAtLogin }),
   settings: async args => {
     if (oauthFlow) throw new Error('请先取消华为登录');
-    if (args.paused === false) await withClipboard(async () => { const c = await clipAdapter.read(); last = c ? contentHash(c.content) : ''; });
     garden.configure(args); notify();
+    if ('openAtLogin' in args) app.setLoginItemSettings({ openAtLogin: Boolean(args.openAtLogin) });
   },
   add: args => { garden.capture('text', String(args.content || '')); notify(); },
   edit: args => { garden.edit(args.id, args.patch || {}); notify(); },
@@ -99,7 +97,7 @@ else {
     win.on('close', e => { if (!quitting) { e.preventDefault(); win.hide(); } });
     const icon = nativeImage.createFromPath(join(__dirname, 'icon.png'));
     tray = new Tray(icon.resize({ width: 18, height: 18 })); tray.setToolTip('剪贴花园 Next');
-    tray.setContextMenu(Menu.buildFromTemplate([{ label: '打开剪贴花园', click: show }, { label: '暂停 / 继续记录', click: () => { actions.settings({ paused: !garden.state.paused }).catch(e => { garden.message = e.message; notify(); }); } }, { label: '退出', click: () => { quitting = true; app.quit(); } }]));
+    tray.setContextMenu(Menu.buildFromTemplate([{ label: '打开剪贴花园', click: show }, { label: '退出', click: () => { quitting = true; app.quit(); } }]));
     tray.on('click', show);
     if (!globalShortcut.register('CommandOrControl+Shift+V', () => win.isVisible() ? win.hide() : show())) garden.message = '快捷键注册失败，请使用托盘打开花园';
     // Sync must start independently of clipboard access or permission errors.
@@ -108,10 +106,8 @@ else {
       catch (e) { garden.message = e.message; }
       notify();
     }, 5000);
-    if (!garden.state.paused) {
-      try { const c = await withClipboard(() => clipAdapter.read()); last = c ? contentHash(c.content) : ''; }
-      catch (e) { garden.message = '剪贴板读取失败：' + e.message; }
-    }
+    try { const c = await withClipboard(() => clipAdapter.read()); last = c ? contentHash(c.content) : ''; }
+    catch (e) { garden.message = '剪贴板读取失败：' + e.message; }
     captureTimer = setInterval(capture, 1000);
     app.on('activate', show);
   }).catch(error => { dialog.showErrorBox('应用启动失败', error.message); app.quit(); });
