@@ -11,7 +11,7 @@ function el(tag, text, cls) { const node = document.createElement(tag); if (text
 function button(text, label, action) { const b = el('button', text); b.setAttribute('aria-label', label); b.title = label; b.onclick = async () => { try { await action(); } catch (e) { toast(e.message); } }; return b; }
 function renderCards(target, items) {
   target.replaceChildren();
-  if (!items.length) { const e = el('div', undefined, 'empty'); e.append(el('span','🌱'), el('div',query ? '还没找到这条小记忆' : '花园还空着'), el('small',query ? '换个关键词试试吧' : '点击「开始记录」，或手动记下一条。\n已有剪贴板不会自动导入。')); target.append(e); return; }
+  if (!items.length) { const e = el('div', undefined, 'empty'); e.append(el('span','🌱'), el('div',query ? '还没找到这条小记忆' : '花园还空着'), el('small',query ? '换个关键词试试吧' : '复制内容会自动记入花园，或手动记下一条。')); target.append(e); return; }
   for (const item of items) {
     const card = el('article', undefined, 'card');
     const top = el('div',undefined,'card-top'); top.append(el('span',item.kind === 'image' ? '▧  图片记忆' : /^https?:\/\//.test(item.content) ? '↗  链接' : '≡  文字记忆'),el('span',item.conflict ? '冲突副本' : new Date(item.lastCopiedAt).toLocaleString('zh-CN',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})));
@@ -32,24 +32,22 @@ function render() {
   renderCards($('recent'),[...items].sort((a,b)=>b.lastCopiedAt-a.lastCopiedAt).slice(0,100));
   renderCards($('frequent'),[...items].sort((a,b)=>Number(b.pinned)-Number(a.pinned)||b.copyCount-a.copyCount||b.lastCopiedAt-a.lastCopiedAt).slice(0,100));
   $('cancelHuawei').hidden = !snapshot.huaweiPending;
-  $('pause').textContent = snapshot.paused ? '开始记录' : '暂停记录';
   $('account').textContent = snapshot.user ? '我的账号' : '游客模式 · 登录';
   $('syncBanner').textContent = snapshot.user ? `${snapshot.user.email} · ${snapshot.message || '账号花园'}${snapshot.pending ? ` · ${snapshot.pending} 条待同步` : ''}` : '🌱 游客也能自在使用。记录只留在本机，登录后可选择合并并跨设备同步。';
-  $('status').textContent = `${snapshot.paused ? '○ 记录已暂停' : '● 正在本机记住'} · ${snapshot.items.length} 条记忆`;
+  $('status').textContent = `● 正在本机记录 · ${snapshot.items.length} 条记忆`;
   $('sync').textContent = snapshot.busy ? '正在同步…' : '同步一下 ↗';
   if (snapshot.user && $('authDialog').open) $('authDialog').close();
 }
 async function refresh() { try { snapshot = await call('snapshot'); render(); } catch(e) { toast(e.message); } }
 function safe(fn) { return async (...args)=>{try {await fn(...args);} catch(e) {toast(e.message);} }; }
 $('search').oninput = e=>{query=e.target.value.toLowerCase().trim();render();};
-$('pause').onclick=safe(async()=>{await call('settings',{paused:!snapshot.paused});await refresh();});
 $('sync').onclick=safe(async()=>{if(!snapshot.user) return $('authDialog').showModal();await call('sync');await refresh();});
 $('add').onclick=()=>$('addDialog').showModal();
 $('addForm').onsubmit=safe(async e=>{e.preventDefault();await call('add',{content:$('newContent').value});$('newContent').value='';$('addDialog').close();await refresh();});
-function settings(){ $('serverUrl').value=snapshot.server; $('syncToggle').checked=snapshot.syncEnabled; $('syncToggle').disabled=!snapshot.user; $('logout').hidden=!snapshot.user; $('settingsError').textContent=''; $('settingsDialog').showModal(); }
+function settings(){ $('serverUrl').value=snapshot.server; $('syncToggle').checked=snapshot.syncEnabled; $('startupToggle').checked=snapshot.openAtLogin; $('syncToggle').disabled=!snapshot.user; $('logout').hidden=!snapshot.user; $('settingsError').textContent=''; $('settingsDialog').showModal(); }
 $('settings').onclick=settings;
 $('account').onclick=()=>snapshot.user ? settings() : $('authDialog').showModal();
-$('saveSettings').onclick=async()=>{try {await call('settings',{server:$('serverUrl').value,syncEnabled:$('syncToggle').checked});$('settingsDialog').close();await refresh();}catch(e){$('settingsError').textContent=e.message;}};
+$('saveSettings').onclick=async()=>{try {await call('settings',{server:$('serverUrl').value,syncEnabled:$('syncToggle').checked,openAtLogin:$('startupToggle').checked});$('settingsDialog').close();await refresh();}catch(e){$('settingsError').textContent=e.message;}};
 $('export').onclick=safe(()=>call('export'));
 $('logout').onclick=safe(async()=>{await call('logout');$('settingsDialog').close();await refresh();});
 function authMode(next){mode=next;$('loginTab').classList.toggle('selected',mode==='login');$('registerTab').classList.toggle('selected',mode==='register');$('authSubmit').textContent=mode==='login'?'登录并同步':'注册并同步';$('authForm').elements.password.autocomplete=mode==='login'?'current-password':'new-password';$('authError').textContent='';}
@@ -59,4 +57,4 @@ $('huawei').onclick=async()=>{try{await call('huawei',{mergeGuest:$('mergeGuest'
 $('cancelHuawei').onclick=safe(async()=>{await call('cancelHuawei');toast('已取消华为登录');});
 for(const b of document.querySelectorAll('[data-close]')) b.onclick=()=>$(b.dataset.close).close();
 document.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key==='f'){e.preventDefault();$('search').focus();}});
-if(window.garden){window.garden.onChange(()=>refresh());refresh();}else{snapshot={items:[],paused:true,server:'http://127.0.0.1:4318',syncEnabled:false};render();$('syncBanner').textContent='界面预览 · 账号、剪贴板与同步功能请使用安装版。';}
+if(window.garden){window.garden.onChange(()=>refresh());refresh();}else{snapshot={items:[],server:'http://127.0.0.1:4318',syncEnabled:false,openAtLogin:false};render();$('syncBanner').textContent='界面预览 · 账号、剪贴板与同步功能请使用安装版。';}
