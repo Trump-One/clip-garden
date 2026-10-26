@@ -1,6 +1,6 @@
 {
   "name": "clip-garden",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "private": true,
   "description": "剪贴花园 · Windows / macOS / HarmonyOS",
   "main": "desktop/main.cjs",

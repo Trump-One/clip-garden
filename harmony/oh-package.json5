@@ -1,7 +1,7 @@
 {
   "modelVersion": "6.0.0",
   "name": "clip-garden",
-  "version": "0.1.1",
+  "version": "0.1.3",
   "description": "剪贴花园 HarmonyOS 7",
   "dependencies": {},
   "devDependencies": {}
