@@ -3,3 +3,6 @@ allowBuilds:
   electron-winstaller: true
 minimumReleaseAgeExclude:
   - electron@44.9.1
+supportedArchitectures:
+  os: [current]
+  cpu: [current, x64, arm64]

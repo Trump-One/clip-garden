@@ -37,6 +37,18 @@ jobs:
         run: pnpm exec electron-builder --mac dmg zip --arm64 --x64 --publish never
       - if: runner.os == 'Windows'
         run: pnpm exec electron-builder --win nsis --x64 --publish never
+      - name: Test packaged Windows clipboard modules
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $env:GARDEN_APP_ROOT = Join-Path $PWD 'release/win-unpacked/resources/app.asar'
+          pnpm exec electron tests/electron-clipboard-smoke.cjs
+      - name: Test packaged macOS clipboard modules
+        if: runner.os == 'macOS'
+        run: |
+          ARCH=$(node -p process.arch)
+          if [ "$ARCH" = arm64 ]; then APP_DIR=mac-arm64; else APP_DIR=mac; fi
+          GARDEN_APP_ROOT="$PWD/release/$APP_DIR/剪贴花园 Next.app/Contents/Resources/app.asar" pnpm exec electron tests/electron-clipboard-smoke.cjs
       - uses: actions/upload-artifact@v4
         with:
           name: ClipGarden-${{ runner.os }}
