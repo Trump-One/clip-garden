@@ -2,28 +2,17 @@ const { app, BrowserWindow, ipcMain, clipboard, ClipboardItem, globalShortcut, n
 const { readFileSync, writeFileSync, renameSync, existsSync, mkdirSync } = require('node:fs');
 const { join, resolve } = require('node:path');
 const { fileURLToPath } = require('node:url');
-const { createHash } = require('node:crypto');
 const { Garden, initialState } = require('./core.cjs');
 const { createClipboardAdapter } = require('./clipboard.cjs');
+const { createClipboardRevisionReader } = require('./clipboard-revision.cjs');
+const { createClipboardRecorder } = require('./clipboard-recorder.cjs');
 const clipAdapter = createClipboardAdapter({ clipboard, ClipboardItem, nativeImage });
-let clipQueue = Promise.resolve(), captureBusy = false;
-function withClipboard(fn) { const result = clipQueue.then(fn); clipQueue = result.catch(() => {}); return result; }
-let win, tray, garden, last = '', captureTimer, syncTimer, oauthFlow, quitting = false;
-const contentHash = x => createHash('sha256').update(x).digest('hex');
+let win, tray, garden, recorder, captureTimer, syncTimer, oauthFlow, quitting = false;
 function notify() { if (win && !win.isDestroyed()) win.webContents.send('garden:changed'); }
 function show() { win.show(); win.focus(); }
 async function capture() {
-  if (captureBusy) return;
-  captureBusy = true;
-  try {
-    await withClipboard(async () => {
-      const clip = await clipAdapter.read();
-      if (!clip) { last = ''; return; }
-      const key = contentHash(clip.content);
-      if (key !== last) { last = key; garden.capture(clip.kind, clip.content); notify(); }
-    });
-  } catch (e) { garden.message = '剪贴板读取失败：' + e.message; notify(); }
-  finally { captureBusy = false; }
+  try { await recorder.poll(); }
+  catch (e) { garden.message = '剪贴板读取失败：' + e.message; notify(); }
 }
 async function beginHuawei(mergeGuest) {
   if (oauthFlow) throw new Error('华为登录正在进行，请先完成或取消');
@@ -54,7 +43,11 @@ const actions = {
   edit: args => { garden.edit(args.id, args.patch || {}); notify(); },
   copy: async args => {
     const item = garden.space.items.find(i => i.id === args.id && !i.deleted); if (!item) throw new Error('记录不存在');
-    await withClipboard(async () => { await clipAdapter.write(item); last = contentHash(item.content); }); // Application copies do not inflate usage.
+    const account = garden.state.active;
+    await recorder.copy(item, () => {
+      // An account switch during the asynchronous write must not import private content.
+      if (garden.state.active === account) { garden.recordCopy(item.id); notify(); }
+    });
   },
   login: async args => { if (garden.busy || oauthFlow) throw new Error('请等待当前操作完成'); await garden.login(args.mode, args.email, args.password, Boolean(args.mergeGuest)); await garden.sync(); notify(); },
   huawei: args => beginHuawei(Boolean(args.mergeGuest)),
@@ -82,6 +75,12 @@ else {
     garden = new Garden(state, value => {
       const tmp = statePath + '.tmp'; writeFileSync(tmp, safeStorage.encryptString(JSON.stringify(value)), { mode: 0o600 }); renameSync(tmp, statePath);
     });
+    let getRevision;
+    try { getRevision = createClipboardRevisionReader(); }
+    catch (e) { garden.message = '系统剪贴板变更检测不可用，连续相同内容可能漏计：' + e.message; }
+    recorder = createClipboardRecorder({ adapter: clipAdapter, getRevision, onCapture: clip => {
+      garden.capture(clip.kind, clip.content); notify();
+    } });
     win = new BrowserWindow({ width: 1120, height: 800, minWidth: 760, minHeight: 580, title: '剪贴花园 Next', backgroundColor: '#f8f3e4',
       webPreferences: { preload: join(__dirname, 'preload.cjs'), nodeIntegration: false, contextIsolation: true, sandbox: true } });
     const uiPath = resolve(__dirname, '../ui/index.html');
@@ -106,9 +105,9 @@ else {
       catch (e) { garden.message = e.message; }
       notify();
     }, 5000);
-    try { const c = await withClipboard(() => clipAdapter.read()); last = c ? contentHash(c.content) : ''; }
+    try { await recorder.initialize(); }
     catch (e) { garden.message = '剪贴板读取失败：' + e.message; }
-    captureTimer = setInterval(capture, 1000);
+    captureTimer = setInterval(capture, 250);
     app.on('activate', show);
   }).catch(error => { dialog.showErrorBox('应用启动失败', error.message); app.quit(); });
 }

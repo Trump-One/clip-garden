@@ -44,6 +44,12 @@ class Garden {
     if (patch.deleted) { item.deleted = true; item.content = ''; }
     this.change(item);
   }
+  recordCopy(id) {
+    const item = this.space.items.find(i => i.id === id && !i.deleted);
+    if (!item) return;
+    item.copyCount++; item.lastCopiedAt = Date.now(); this.change(item);
+    return item;
+  }
   configure(settings) {
     if ('server' in settings) {
       const u = new URL(settings.server);
