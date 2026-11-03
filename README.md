@@ -10,6 +10,7 @@
 | --- | --- |
 | Windows / macOS 安装应用 | Electron 桌面工程，已生成 macOS ARM64 DMG/ZIP 和 Windows x64 NSIS EXE；macOS 已启动验证，Windows 待真机验证 |
 | HarmonyOS 7 | ArkTS / ArkUI 原生工程，API 26.0.0；账号授权代码已编译。新的华为应用包名需重新生成匹配的 DevEco 签名 Profile，当前真机上的旧调试版尚未替换 |
+| Android 10+ | 原生文字收录预览版，支持粘贴、系统分享、本地历史、搜索、按最近或常用排序、复制与删除 |
 | 登录注册 | 邮箱 + 密码、scrypt 密码哈希、可撤销会话；无需邮件服务即可本机测试 |
 | 游客使用 | 不需要服务，本机保存；与账号数据隔离 |
 | 游客转账号 | 登录时显式勾选合并，才移动并上传游客记录 |
@@ -62,6 +63,19 @@ pnpm dist:win
 
 桌面应用打开后默认自动记录剪贴板变化；启动时已在剪贴板中的内容不会自动导入，可在设置中启用当前系统用户的开机自启。关闭窗口后应用仍驻留托盘并持续记录，彻底退出应用可停止记录。全局快捷键 `Ctrl/Command+Shift+V`，关闭窗口隐藏到托盘，托盘菜单可退出。支持文字和 PNG 图片，忽略已识别的密码管理器敏感标记；不提供完整敏感内容识别。Windows / macOS 每 250 毫秒检查系统剪贴板变更标识，连续复制相同文字或图片也会累计；在花园里点击「复制」成功后累计一次，不会被后台再计一次。次数包含检测到的系统写入、手动收录和应用内复制；同一检查间隔内被覆盖的内容、没有重新写入剪贴板的复制动作无法还原。系统变更检测不可用时退回内容比较，可能漏计连续相同内容。
 
+## Android 10+
+
+Android 预览版可在应用内点击「粘贴收录」，也可从其他应用的系统分享菜单选择「剪贴花园 Next」，确认后保存。记录存于应用私有 SQLite 数据库。当前支持本地文字历史，图片、后台监听、账号与设备间同步暂未接入。
+
+用 JDK 17 和 Android SDK 36 打开 `android/`，或从仓库根目录运行：
+
+```sh
+cd android
+./gradlew :app:assembleDebug :app:lintDebug
+```
+
+Windows 将 `./gradlew` 换成 `gradlew.bat`。APK 位于 `android/app/build/outputs/apk/debug/app-debug.apk`，也可从 [GitHub Actions](https://github.com/Trump-One/clip-garden/actions/workflows/build.yml) 的成功构建下载 `ClipGarden-Android-debug`。解压后安装 APK，或运行 `adb install -r app-debug.apk`。调试签名只用于测试，不同构建机器生成的 APK 可能无法互相覆盖安装。卸载会清除本地历史。
+
 ## HarmonyOS 7
 
 使用包含 **API 26** 的 DevEco Studio 打开 `harmony/`，自动安装所需构建工具。SDK 的产品版本配置为 `"26.0.0"`，这是 API 26 新版构建格式。
@@ -94,6 +108,7 @@ hvigorw --mode module -p product=default -p module=entry@default assembleHap
 
 - `desktop/`：Electron 主进程、受限 IPC、本机存储、同步客户端。
 - `ui/`：桌面界面；`pnpm preview` 可预览样式，不提供浏览器版账号功能。
+- `android/`：Android 原生客户端与 Gradle 工程。
 - `harmony/`：独立 ArkTS / ArkUI 原生客户端。
 - `server/`：账号、华为 OAuth、增量同步 API。
 - `tests/`：真实 HTTP + SQLite 集成测试和双客户端同步测试。
