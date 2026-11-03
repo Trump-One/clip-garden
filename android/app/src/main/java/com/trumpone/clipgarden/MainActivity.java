@@ -64,7 +64,7 @@ public final class MainActivity extends Activity {
                             insets.getSystemWindowInsetRight(), insets.getSystemWindowInsetBottom());
             view.setPadding(safe.left + dp(20), safe.top + dp(16),
                     safe.right + dp(20), safe.bottom);
-            return WindowInsets.CONSUMED;
+            return Build.VERSION.SDK_INT >= 30 ? WindowInsets.CONSUMED : insets;
         });
         setContentView(page);
 
