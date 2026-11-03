@@ -99,4 +99,4 @@ hvigorw --mode module -p product=default -p module=entry@default assembleHap
 - `tests/`：真实 HTTP + SQLite 集成测试和双客户端同步测试。
 - `.github/workflows/`：跨系统自动测试 / 打包；产物在 Actions 中下载。
 
-源代码公开存放于 [Trump-One/clip-garden](https://github.com/Trump-One/clip-garden)。未附加开源许可证，公开可见不代表授权任意再分发。
+本项目以 [MIT 许可证](LICENSE) 开源。第三方依赖遵循各自的许可证。
