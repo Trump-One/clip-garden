@@ -1,0 +1,24 @@
+<resources>
+    <string name="app_name">剪贴花园 Next</string>
+    <string name="local_note">文字收录仅保存在此设备</string>
+    <string name="paste">粘贴收录</string>
+    <string name="search">搜索已收录的文字</string>
+    <string name="recent">最近复制</string>
+    <string name="frequent">常用内容</string>
+    <string name="empty">花园还是空的。复制一段文字，再点「粘贴收录」。</string>
+    <string name="no_matches">没有匹配的记录</string>
+    <string name="no_text">剪贴板中没有可收录的文字</string>
+    <string name="sensitive">已跳过标记为敏感的剪贴板内容</string>
+    <string name="too_long">文字超过 16,384 字符，无法收录</string>
+    <string name="saved">已收录</string>
+    <string name="storage_error">无法更新本地记录，请检查设备存储后重试</string>
+    <string name="read_error">无法读取剪贴板，请重新复制文字后重试</string>
+    <string name="copy">复制</string>
+    <string name="copied">已复制</string>
+    <string name="copy_error">无法复制到系统剪贴板</string>
+    <string name="delete">删除</string>
+    <string name="delete_title">删除这条记录？</string>
+    <string name="share_title">收录分享的文字？</string>
+    <string name="save">收录</string>
+    <string name="count">收录或复制 %1$d 次</string>
+</resources>
